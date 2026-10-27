@@ -34,14 +34,18 @@ export function observedInfo(history: number[], from: number[], to: number[]): n
  * its own random outside bit, keyed ~j.
  */
 export function groupInfo(model: NetworkModel, from: number[], to: number[]): number {
-  const sources = (j: number) => (model.nodes[j].sense ? [~j] : model.nodes[j].inputs);
+  const sources = (j: number) => [...model.nodes[j].inputs, ...(model.nodes[j].sense ? [~j] : [])];
   const used = [...new Set([...from, ...to.flatMap(sources)])];
   const slot = new Map(used.map((node, i) => [node, i]));
   const fromSlots = from.map((i) => slot.get(i)!);
-  const rules = to.map((j) => ({
-    slots: sources(j).map((i) => slot.get(i)!),
-    table: model.nodes[j].sense ? [0, 1] : model.nodes[j].table,
-  }));
+  const rules = to.map((j) => {
+    const node = model.nodes[j];
+    const base = node.inputs.length ? node.table : [0];
+    return {
+      slots: sources(j).map((i) => slot.get(i)!),
+      table: node.sense ? [...base, ...base.map(() => 1)] : base,
+    };
+  });
   const joint = new Float64Array(2 ** (from.length + to.length));
   for (let u = 0; u < 2 ** used.length; u++) {
     let x = 0;

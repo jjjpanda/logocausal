@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { PointerEvent } from "react";
-import { COLD, H, HOT, LIGHT_RANGE, SMELL_RANGE, SPLIT_ENERGY, START_ENERGY, W, familyOf, sunAt, temperature, tired } from "../core/evolve";
+import { COLD, H, HOT, LIGHT_RANGE, SPLIT_ENERGY, START_ENERGY, SUN_SPEED, W, familyOf, feedRadius, lightAt, pushVector, senseRadius, sunAt, temperature, tired } from "../core/evolve";
 import type { Energy, Point, World } from "../core/evolve";
 import { SENSES, members } from "../core/model";
 import type { NetworkModel } from "../core/model";
@@ -9,41 +9,67 @@ import { HALF_COLORS, familyColor } from "../tiers";
 
 type Body = Point & { vx: number; vy: number };
 export type Bodies = Map<string, Body>;
-type Grab = { neuron: number; id: string } | number;
+type Grab = { neuron: number; id: string };
 export const GROUP_COLORS = ["#0a9d62", "#9d4edd", "#f77f00"];
 export const groupName = (model: NetworkModel, mask: number) =>
   `{${members(mask, model.nodes.length)
     .map((i) => model.nodes[i].label)
     .join(", ")}}`;
 
-const FADE = 700;
+const FADE = 900;
 const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-const radius = (n: number) => (n > 10 ? 17 : 26);
+const radius = (n: number) => (n > 12 ? 26 : 34);
 
-/** Place new neurons near the neurons they read, so a clone appears beside its parent. */
-function place(model: NetworkModel, bodies: Bodies) {
-  const n = model.nodes.length;
+/** Place new neurons beside their parent family member, connected neurons, or the existing cluster near food/sun. */
+function place(model: NetworkModel, bodies: Bodies, world?: World) {
+  const n = Math.max(1, model.nodes.length);
+  const existing = [...bodies.values()];
+  const bestFood =
+    world && world.food.length > 0
+      ? [...world.food].sort((a, b) => b.amount * (lightAt(world, b) + 0.2) - a.amount * (lightAt(world, a) + 0.2))[0]
+      : undefined;
+  const clusterCenter = existing.length
+    ? centroid(existing)
+    : bestFood
+      ? { x: bestFood.x, y: bestFood.y }
+      : { x: W / 2, y: LIGHT_RANGE * 0.45 };
   model.nodes.forEach((node, i) => {
     if (bodies.has(node.id)) return;
-    const near = node.inputs.flatMap((j) => bodies.get(model.nodes[j].id) ?? []);
+    const kin = model.nodes.find((o) => o.id !== node.id && familyOf(o.label) === familyOf(node.label) && bodies.has(o.id));
+    const parent = kin ? bodies.get(kin.id) : undefined;
+    if (parent) {
+      const angle = Math.random() * 2 * Math.PI;
+      bodies.set(node.id, { x: parent.x + Math.cos(angle) * 18, y: parent.y + Math.sin(angle) * 18, vx: 0, vy: 0 });
+      return;
+    }
+    const near = node.inputs.flatMap((j) => bodies.get(model.nodes[j]?.id) ?? []);
     const base = near.length
-      ? { x: near.reduce((s, p) => s + p.x, 0) / near.length, y: near.reduce((s, p) => s + p.y, 0) / near.length }
-      : { x: W / 2 + Math.cos((i * 2 * Math.PI) / n) * 150, y: H / 2 + Math.sin((i * 2 * Math.PI) / n) * 120 };
-    bodies.set(node.id, { x: base.x + Math.random() * 40 - 20, y: base.y + Math.random() * 40 - 20, vx: 0, vy: 0 });
+      ? centroid(near)
+      : {
+          x: clusterCenter.x + (model.nodes.length > 1 ? Math.cos((i * 2 * Math.PI) / n) * 80 : 0),
+          y: clusterCenter.y + (model.nodes.length > 1 ? Math.sin((i * 2 * Math.PI) / n) * 70 : 0),
+        };
+    bodies.set(node.id, { x: base.x + Math.random() * 30 - 15, y: base.y + Math.random() * 30 - 15, vx: 0, vy: 0 });
   });
 }
 
-/** One physics frame: neurons repel, links pull like springs, and stronger or two-way links pull harder. */
-function settle(model: NetworkModel, influences: number[][], bodies: Bodies, pinned?: string) {
-  place(model, bodies);
+/** One physics frame: neurons repel, links pull like springs, and active push neurons direct the whole system. */
+function settle(model: NetworkModel, influences: number[][], bodies: Bodies, state: number, world: World, pinned?: string) {
+  place(model, bodies, world);
   const list = model.nodes.map((node) => bodies.get(node.id)!);
   const n = list.length,
     r = radius(n),
-    rest = r * 5;
-  for (const b of list) {
-    b.vx += (W / 2 - b.x) * 0.0015;
-    b.vy += (H / 2 - b.y) * 0.0015;
-  }
+    rest = r * 4.6;
+  const center = centroid(list);
+  const push = pushVector(model, state, world, (id) => bodies.get(id) ?? center);
+  list.forEach((b, i) => {
+    b.vx += (center.x - b.x) * 0.003 + push.x;
+    b.vy += (center.y - b.y) * 0.003 + push.y;
+    if (model.nodes[i].push && (state >>> i) & 1) {
+      b.vx += push.x * 0.4;
+      b.vy += push.y * 0.4;
+    }
+  });
   for (let i = 0; i < n; i++)
     for (let j = i + 1; j < n; j++) {
       const a = list[i],
@@ -51,8 +77,9 @@ function settle(model: NetworkModel, influences: number[][], bodies: Bodies, pin
       const dx = b.x - a.x,
         dy = b.y - a.y,
         d = Math.max(8, Math.hypot(dx, dy));
-      const pull = influences[i][j] + influences[j][i];
-      const force = 5000 / (d * d) - pull * 0.012 * (d - rest);
+      const linked = Number(model.nodes[i].inputs.includes(j)) + Number(model.nodes[j].inputs.includes(i));
+      const pull = Math.max(linked * 0.5, influences[i][j] + influences[j][i]);
+      const force = 5200 / (d * d) - pull * 0.015 * (d - rest);
       a.vx -= (dx / d) * force;
       a.vy -= (dy / d) * force;
       b.vx += (dx / d) * force;
@@ -64,8 +91,8 @@ function settle(model: NetworkModel, influences: number[][], bodies: Bodies, pin
     b.vx *= 0.82;
     b.vy *= 0.82;
     if (Math.hypot(b.vx, b.vy) < 0.05) return;
-    b.x = Math.max(r + 12, Math.min(W - r - 12, b.x + b.vx));
-    b.y = Math.max(r + 30, Math.min(H - r - 12, b.y + b.vy));
+    b.x = Math.max(r + 16, Math.min(W - r - 16, b.x + b.vx));
+    b.y = Math.max(r + 30, Math.min(H - r - 16, b.y + b.vy));
   });
 }
 
@@ -83,14 +110,15 @@ function hull(points: Point[]): Point[] {
   return [...half(sorted).slice(0, -1), ...half([...sorted].reverse()).slice(0, -1)];
 }
 
-function outline(points: Point[], padding: number): string {
-  if (points.length === 1) {
+export function outline(points: Point[], padding: number): string {
+  if (!points.length) return "";
+  const vertices = points.length === 1 ? points : hull(points);
+  if (vertices.length <= 1) {
     const [{ x, y }] = points;
     return `M ${x - padding},${y} A ${padding},${padding} 0 1 0 ${x + padding},${y} A ${padding},${padding} 0 1 0 ${x - padding},${y} Z`;
   }
-  const vertices = hull(points);
-  if (vertices.length <= 2) {
-    const [a, b = a] = vertices;
+  if (vertices.length === 2) {
+    const [a, b] = vertices;
     const d = Math.max(0.001, Math.hypot(b.x - a.x, b.y - a.y));
     const nx = (-(b.y - a.y) / d) * padding,
       ny = ((b.x - a.x) / d) * padding;
@@ -107,10 +135,13 @@ function outline(points: Point[], padding: number): string {
   );
 }
 
-const centroid = (points: Point[]): Point => ({
-  x: points.reduce((s, p) => s + p.x, 0) / points.length,
-  y: points.reduce((s, p) => s + p.y, 0) / points.length,
-});
+const centroid = (points: Point[]): Point =>
+  points.length
+    ? {
+        x: points.reduce((s, p) => s + p.x, 0) / points.length,
+        y: points.reduce((s, p) => s + p.y, 0) / points.length,
+      }
+    : { x: W / 2, y: LIGHT_RANGE * 0.45 };
 
 /** De Casteljau: point at t on a Bézier curve through its control points. */
 const bezier = (pts: Point[], t: number): Point =>
@@ -136,13 +167,6 @@ function arc(a: Point, b: Point, bend: number, trim: number): Point[] {
   ];
 }
 
-const selfLoop = (p: Point, size: number): Point[] => [
-  { x: p.x - size * 0.4, y: p.y - size * 0.5 },
-  { x: p.x - size * 1.4, y: p.y - size * 2 },
-  { x: p.x + size * 1.4, y: p.y - size * 2 },
-  { x: p.x + size * 0.4, y: p.y - size * 0.5 },
-];
-
 const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
 export default function NetworkGraph({
@@ -159,7 +183,6 @@ export default function NetworkGraph({
   focus,
   selectedNeuron,
   onNeuron,
-  onWorld,
 }: {
   model: NetworkModel;
   influences: number[][];
@@ -174,12 +197,15 @@ export default function NetworkGraph({
   focus?: TierScore;
   selectedNeuron: number | null;
   onNeuron: (index: number) => void;
-  onWorld: (world: World) => void;
 }) {
+  const state = history[history.length - 1];
   const ghosts = useRef<(Point & { at: number; id: string })[]>([]);
+  const births = useRef<(Point & { at: number; id: string })[]>([]);
+  const reaches = useRef<{ fromId: string; toId: string; at: number; key: string }[]>([]);
+  const prevLinks = useRef<Set<string>>(new Set());
   const ids = useRef<string[]>([]);
-  const latest = useRef({ model, influences });
-  latest.current = { model, influences };
+  const latest = useRef({ model, influences, state, world });
+  latest.current = { model, influences, state, world };
   const drag = useRef<{ grab: Grab; moved: boolean; start: Point } | null>(null);
   const tickStart = useRef(0);
   const [now, setNow] = useState(0);
@@ -191,32 +217,58 @@ export default function NetworkGraph({
   }, [tick]);
 
   useEffect(() => {
+    place(model, bodies, latest.current.world);
     const present = new Set(model.nodes.map((node) => node.id));
+    const prev = new Set(ids.current);
+    const nowTime = performance.now();
+    if (prev.size > 0) {
+      for (const id of present)
+        if (!prev.has(id)) {
+          const body = bodies.get(id);
+          if (body) births.current.push({ x: body.x, y: body.y, at: nowTime, id });
+        }
+    }
     for (const id of ids.current)
       if (!present.has(id)) {
         const body = bodies.get(id);
-        if (body) ghosts.current.push({ x: body.x, y: body.y, at: performance.now(), id });
+        if (body) ghosts.current.push({ x: body.x, y: body.y, at: nowTime, id });
         bodies.delete(id);
       }
     ids.current = [...present];
+
+    const currentLinks = new Set<string>();
+    model.nodes.forEach((node) => {
+      node.inputs.forEach((srcIdx) => {
+        const src = model.nodes[srcIdx];
+        if (!src) return;
+        const key = `${src.id}->${node.id}`;
+        currentLinks.add(key);
+        if (prevLinks.current.size > 0 && !prevLinks.current.has(key)) {
+          reaches.current.push({ fromId: src.id, toId: node.id, at: nowTime, key: `${key}-${nowTime}` });
+        }
+      });
+    });
+    prevLinks.current = currentLinks;
   }, [model, bodies]);
 
   useEffect(() => {
     let frame = requestAnimationFrame(function animate(time) {
       const grab = drag.current?.grab;
-      settle(latest.current.model, latest.current.influences, bodies, typeof grab === "object" ? grab.id : undefined);
+      const cur = latest.current;
+      settle(cur.model, cur.influences, bodies, cur.state, cur.world, grab?.id);
       ghosts.current = ghosts.current.filter((g) => time - g.at < FADE);
+      births.current = births.current.filter((b) => time - b.at < FADE);
+      reaches.current = reaches.current.filter((rc) => time - rc.at < FADE);
       setNow(time);
       frame = requestAnimationFrame(animate);
     });
     return () => cancelAnimationFrame(frame);
   }, [bodies]);
 
-  place(model, bodies);
+  place(model, bodies, world);
   const at = model.nodes.map((node) => bodies.get(node.id)!);
   const n = model.nodes.length;
   const r = radius(n);
-  const state = history[history.length - 1];
   const on = (i: number) => (state >>> i) & 1;
   const phase = running && !reducedMotion() ? Math.min(1, (now - tickStart.current) / period) : 0;
   const travel = ease(phase);
@@ -233,12 +285,14 @@ export default function NetworkGraph({
     drag.current = { grab: target, moved: false, start: pointAt(event) };
   };
 
-  const edges = influences.flatMap((row, i) =>
-    row.flatMap((weight, j) =>
-      weight < 1e-10
-        ? []
-        : [{ i, j, weight, pts: i === j ? selfLoop(at[i], r * 1.6) : arc(at[i], at[j], influences[j][i] > 1e-10 ? 22 : 0, r + 4) }],
-    ),
+  const hasLink = (from: number, to: number) => model.nodes[to]?.inputs.includes(from) ?? false;
+  const edges = model.nodes.flatMap((node, j) =>
+    node.inputs.flatMap((i) => {
+      if (i < 0 || i >= n || i === j) return [];
+      const weight = Math.max(0.35, influences[i]?.[j] ?? 0.5);
+      const mutual = hasLink(j, i);
+      return [{ i, j, weight, pts: arc(at[i], at[j], mutual ? 24 : 0, r + 5) }];
+    }),
   );
 
   const half = model.nodes.map(() => -1);
@@ -253,20 +307,17 @@ export default function NetworkGraph({
       ref={svg}
       viewBox={`0 0 ${W} ${H}`}
       className="network-svg"
-      aria-label="Neuron network. Click a neuron to edit its rule. Drag neurons and food."
+      aria-label="Neuron network. Click a neuron to edit its rule. Drag neurons."
       onPointerMove={(event) => {
         const d = drag.current;
         if (!d) return;
         const p = pointAt(event);
-        if (Math.hypot(p.x - d.start.x, p.y - d.start.y) > 3) d.moved = true;
-        if (typeof d.grab === "number") {
-          const k = d.grab;
-          onWorld({ ...world, food: world.food.map((f, i) => (i === k ? { ...f, ...p } : f)) });
-        } else Object.assign(bodies.get(d.grab.id) ?? {}, p);
+        if (Math.hypot(p.x - d.start.x, p.y - d.start.y) > 14) d.moved = true;
+        if (d.moved) Object.assign(bodies.get(d.grab.id) ?? {}, p);
       }}
       onPointerUp={() => {
         const d = drag.current;
-        if (d && typeof d.grab === "object" && !d.moved) onNeuron(d.grab.neuron);
+        if (d && !d.moved) onNeuron(d.grab.neuron);
         drag.current = null;
       }}
       onPointerCancel={() => {
@@ -279,8 +330,8 @@ export default function NetworkGraph({
           viewBox="0 0 10 10"
           refX="9"
           refY="5"
-          markerWidth="10"
-          markerHeight="10"
+          markerWidth="12"
+          markerHeight="12"
           markerUnits="userSpaceOnUse"
           orient="auto-start-reverse"
         >
@@ -291,33 +342,26 @@ export default function NetworkGraph({
           <stop offset="1" stopColor="var(--sun)" stopOpacity="0" />
         </radialGradient>
       </defs>
-      {world.lit && (
-        <g className="sun" transform={`translate(${sunAt(world).x},${sunAt(world).y})`}>
-          <circle r={LIGHT_RANGE} fill={`url(#${marker}-sun)`} />
-          <circle className="zone cold" r={LIGHT_RANGE * (1 - COLD)} />
-          <circle className="zone hot" r={LIGHT_RANGE * (1 - HOT)} />
-          <circle className="sun-disc" r={14}>
-            <title>Light warms. It circles the edge.</title>
-          </circle>
-        </g>
-      )}
+      {world.lit && (() => {
+        const sunPos = sunAt({ ...world, sun: world.sun + phase * SUN_SPEED });
+        return (
+          <g className="sun" transform={`translate(${sunPos.x},${sunPos.y})`}>
+            <circle r={LIGHT_RANGE} fill={`url(#${marker}-sun)`} />
+            <circle className="zone cold" r={LIGHT_RANGE * (1 - COLD)} />
+            <circle className="zone hot" r={LIGHT_RANGE * (1 - HOT)} />
+          </g>
+        );
+      })()}
       {world.food.map((f, k) => (
         <g key={k} className="food" transform={`translate(${f.x},${f.y})`}>
-          <circle className="zone smell" r={SMELL_RANGE} />
-          <rect
-            x={-9}
-            y={-9}
-            width={18}
-            height={18}
-            transform={`rotate(45) scale(${0.5 + f.amount / 2})`}
-            onPointerDown={grab(k)}
-          >
-            <title>Food feeds neurons that fire near it. Drag it.</title>
-          </rect>
+          <circle className="zone smell" r={senseRadius(f)} />
+          <circle className="zone feed" r={feedRadius(f)} />
+          <polygon className="food-core" points="0,-18 18,0 0,18 -18,0" transform={`scale(${Math.max(0.35, f.amount)})`} />
         </g>
       ))}
       {outlines.map(({ mask, color, bold }, k) => {
         const group = members(mask, n);
+        if (!group.length) return null;
         const lit = group.filter(on).length / group.length;
         return (
           <path
@@ -341,22 +385,40 @@ export default function NetworkGraph({
       {edges.map(({ i, j, weight, pts }) => (
         <path
           key={`${i}-${j}`}
-          className={`edge ${dim(i, j) ? "dim" : ""}`}
+          className={`edge ${dim(i, j) ? "dim" : ""} ${on(i) ? "active" : ""}`}
           d={curve(pts)}
           fill="none"
           stroke={cross(i, j) ? HALF_COLORS[half[i]] : on(i) ? "var(--ink)" : "var(--wire)"}
-          strokeOpacity={cross(i, j) && !on(i) ? 0.45 : 1}
-          strokeWidth={(cross(i, j) ? 4 : 1.5) + weight * 3}
+          strokeOpacity={cross(i, j) && !on(i) ? 0.65 : 1}
+          strokeWidth={(cross(i, j) ? 4.5 : 2.5) + weight * 2.5}
           markerEnd={`url(#${marker})`}
         >
           <title>
-            {model.nodes[j].label} reads {model.nodes[i].label}
+            {model.nodes[j].label} connects to {model.nodes[i].label}
           </title>
         </path>
       ))}
+      {reaches.current.map((rc) => {
+        const a = bodies.get(rc.fromId);
+        const b = bodies.get(rc.toId);
+        if (!a || !b) return null;
+        const t = Math.min(1, (now - rc.at) / FADE);
+        const tip = { x: a.x + (b.x - a.x) * ease(t), y: a.y + (b.y - a.y) * ease(t) };
+        return (
+          <line
+            key={rc.key}
+            className="reach-out"
+            x1={b.x}
+            y1={b.y}
+            x2={tip.x}
+            y2={tip.y}
+            opacity={1 - t * 0.6}
+          />
+        );
+      })}
       {phase > 0 &&
         edges
-          .filter(({ i, j }) => on(i) && !dim(i, j))
+          .filter(({ i }) => on(i))
           .map(({ i, j, pts }) => {
             const p = bezier(pts, travel);
             return (
@@ -365,11 +427,15 @@ export default function NetworkGraph({
                 className="pulse"
                 cx={p.x}
                 cy={p.y}
-                r={cross(i, j) ? 7 : 4.5}
+                r={cross(i, j) ? 7.5 : 5.5}
                 style={cross(i, j) ? { fill: HALF_COLORS[half[i]] } : undefined}
               />
             );
           })}
+      {births.current.map((b) => {
+        const t = (now - b.at) / FADE;
+        return <circle key={b.id} className="birth" cx={b.x} cy={b.y} r={r * (0.8 + t * 2)} opacity={1 - t} />;
+      })}
       {ghosts.current.map((g) => {
         const t = (now - g.at) / FADE;
         return <circle key={g.id} className="ghost" cx={g.x} cy={g.y} r={r * (1 + t * 1.5)} opacity={1 - t} />;
@@ -397,10 +463,13 @@ export default function NetworkGraph({
             transform={`translate(${at[i].x},${at[i].y})`}
           >
             <title>
-              {node.label} · energy {e.toFixed(2)} · {feel}
+              {node.label}
+              {node.sense ? ` · senses ${node.sense}` : ""}
+              {node.push ? ` · moves toward ${node.push}` : ""} · energy {e.toFixed(2)} · {feel}
             </title>
             <g className="spawn">
-              <circle className="halo" r={r + 11} />
+              <circle className="halo" r={r + 14} />
+              {node.push && <circle className={`mover-ring mover-${node.push}`} r={r + 12} />}
               <circle
                 className={`energy ${feel}`}
                 r={r + 6}
@@ -413,15 +482,22 @@ export default function NetworkGraph({
               ) : (
                 <circle className="neuron-body" r={r} style={rim(i)} />
               )}
-              <text textAnchor="middle" dy="0.35em" fontSize={r > 20 ? 18 : 12}>
-                {node.label.length > 5 ? node.label.slice(0, 4) + "…" : node.label}
-              </text>
-              {node.sense ? (
-                <text className="sense" x={r * 0.72} y={-r * 0.72} textAnchor="middle" dy="0.35em">
-                  {SENSES[node.sense]}
+              <circle className="family" cx={r * 0.74} cy={-r * 0.74} r={r > 28 ? 8 : 6} fill={familyColor(familyOf(node.label))} />
+              {node.sense && (
+                <text className="node-tag" x={-r * 0.68} y={-r * 0.52} textAnchor="middle">
+                  {node.label}
                 </text>
-              ) : (
-                <circle className="family" cx={r * 0.72} cy={-r * 0.72} r={r > 20 ? 7 : 5} fill={familyColor(familyOf(node.label))} />
+              )}
+              <text className="sense" textAnchor="middle" dy="0.36em">
+                {node.sense ? SENSES[node.sense] : node.label}
+              </text>
+              {node.push && (
+                <g className="mover-badge" transform={`translate(0,${r + 2})`}>
+                  <rect x={-26} y={-13} width={52} height={24} rx={12} />
+                  <text textAnchor="middle" dy="0.32em">
+                    ◎{SENSES[node.push]}
+                  </text>
+                </g>
               )}
             </g>
           </g>

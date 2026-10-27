@@ -1,5 +1,4 @@
-import { MAX_POPULATION } from "../core/evolve";
-import { HISTORY } from "./Timeline";
+import { HISTORY, MAX_POPULATION } from "../core/evolve";
 
 export interface Vital {
   neurons: number;

@@ -28,16 +28,19 @@ describe("model", () => {
   });
 
   it("rejects networks outside the size and input limits", () => {
-    const model = randomModel(5, 1);
-    expect(() => validateModel({ ...model, nodes: model.nodes.slice(0, 1) })).toThrow();
+    const model = randomModel(MAX_NODES, 1);
+    expect(() => validateModel({ ...model, nodes: [...model.nodes, ...model.nodes] })).toThrow();
     const wide = fixtureModel("overlap");
     wide.nodes[0] = { ...wide.nodes[0], inputs: [0, 1, 2, 3], table: Array(16).fill(0) };
     expect(() => validateModel(wide)).toThrow();
     let full = randomModel(MAX_NODES, 1);
     expect(() => addNode(full)).toThrow();
-    const sensor = fixtureModel("forager");
-    sensor.nodes[0] = { ...sensor.nodes[0], inputs: [1], table: [0, 1] };
-    expect(() => validateModel(sensor)).toThrow();
+    const selfConn = fixtureModel("forager");
+    selfConn.nodes[0] = { ...selfConn.nodes[0], inputs: [0], table: [0, 1] };
+    expect(() => validateModel(selfConn)).toThrow();
+    const dualRole = fixtureModel("forager");
+    dualRole.nodes[0] = { ...dualRole.nodes[0], sense: "food", push: "light", inputs: [1], table: [1, 0] };
+    expect(() => validateModel(dualRole)).not.toThrow();
     full = removeNode(full, 0);
     expect(full.nodes).toHaveLength(MAX_NODES - 1);
   });

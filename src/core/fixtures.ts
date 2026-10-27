@@ -1,7 +1,8 @@
 import { letter, makeNode, makeSensor } from "./model";
 import type { NetworkModel, Sense } from "./model";
 
-const node = (i: number, inputs: number[], table: number[]) => makeNode(`node-${i}`, letter(i), inputs, table);
+const node = (i: number, inputs: number[], table: number[], push?: Sense) =>
+  makeNode(`node-${i}`, letter(i), inputs, table, push);
 const sensor = (i: number, sense: Sense) => makeSensor(`node-${i}`, letter(i), sense);
 const net = (name: string, nodes: NetworkModel["nodes"]): NetworkModel => ({ version: 1, name, seed: 42, nodes });
 
@@ -12,15 +13,15 @@ export const fixtures: { id: string; title: string; model: NetworkModel }[] = [
     model: net("Forager", [
       sensor(0, "food"),
       sensor(1, "light"),
-      node(2, [0, 3], [0, 1, 1, 1]),
+      node(2, [0, 3], [0, 1, 1, 1], "food"),
       node(3, [2], [0, 1]),
-      node(4, [1], [1, 0]),
+      node(4, [1], [1, 0], "light"),
     ]),
   },
   {
     id: "independent",
     title: "Independent bits",
-    model: net("Independent bits", Array.from({ length: 3 }, (_, i) => node(i, [i], [0, 1]))),
+    model: net("Independent bits", Array.from({ length: 3 }, (_, i) => node(i, [], [0]))),
   },
   {
     id: "clusters",
@@ -35,7 +36,7 @@ export const fixtures: { id: string; title: string; model: NetworkModel }[] = [
   {
     id: "oneway",
     title: "One-way influence",
-    model: net("One-way influence", [node(0, [0], [0, 1]), node(1, [0], [0, 1])]),
+    model: net("One-way influence", [sensor(0, "light"), node(1, [0], [0, 1])]),
   },
 ];
 

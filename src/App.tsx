@@ -1,32 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MAX_NODES, addNode, randomModel, remapState, removeNode, validateModel } from "./core/model";
+import { MAX_NODES, addNode, emptyModel, randomModel, remapState, removeNode, validateModel } from "./core/model";
 import type { BinaryNode, NetworkModel } from "./core/model";
 import type { TierScore } from "./core/recursion";
-import { H, W, live, liveLoop, step } from "./core/evolve";
+import { HISTORY, LIGHT_RANGE, START_ENERGY, W, live, liveLoop, step } from "./core/evolve";
 import type { Energy, LifeEvent, World } from "./core/evolve";
-import { fixtureModel, fixtures } from "./core/fixtures";
 import { influences as influenceMatrix } from "./core/info";
 import NetworkGraph, { GROUP_COLORS, groupName } from "./components/NetworkGraph";
 import type { Bodies } from "./components/NetworkGraph";
 import RuleEditor from "./components/RuleEditor";
-import Timeline, { HISTORY } from "./components/Timeline";
 import Vitals from "./components/Vitals";
 import type { Vital } from "./components/Vitals";
 import { HALF_COLORS, TIER_LABEL, TIER_TERM } from "./tiers";
 import type { WorkerRequest, WorkerResponse } from "./worker-protocol";
 import { DRAFT_KEY, parseDraft, serializeDraft } from "./draft";
 
-const START = "forager";
-const initial = fixtureModel(START);
+const initial = emptyModel();
 const bits = (value: number) => value.toFixed(2);
 const LISTED = 40;
 const LOGGED = 6;
+const NOISE = 0.002;
 const START_WORLD: World = {
   lit: true,
-  sun: 100,
+  sun: W / 2,
   food: [
-    { x: 400, y: 260, amount: 1 },
-    { x: 250, y: 190, amount: 1 },
+    { x: W / 2 + 120, y: 240, amount: 1 },
+    { x: W / 2 - 130, y: 260, amount: 1 },
+    { x: W / 2 + 10, y: 340, amount: 1 },
   ],
 };
 
@@ -45,19 +44,16 @@ const randomState = (model: NetworkModel) => Math.floor(Math.random() * 2 ** mod
 export default function App() {
   const [startup] = useState(restoreDraft);
   const [model, setModel] = useState<NetworkModel>(startup.model);
-  const [preset, setPreset] = useState(startup.restored ? "custom" : START);
   const [history, setHistory] = useState(() => [randomState(startup.model)]);
   const [tick, setTick] = useState(0);
   const [running, setRunning] = useState(true);
-  const [evolving, setEvolving] = useState(true);
+  const [dark, setDark] = useState(false);
   const [world, setWorld] = useState(START_WORLD);
   const [events, setEvents] = useState<(LifeEvent & { tick: number })[]>([]);
   const [energy, setEnergy] = useState<Energy>({});
   const [vitals, setVitals] = useState<Vital[]>([]);
   const [speed, setSpeed] = useState(3);
-  const [noise, setNoise] = useState(0.02);
   const [analysis, setAnalysis] = useState<{ model: NetworkModel; tiers: TierScore[] } | null>(null);
-  const [size, setSize] = useState(10);
   const [selectedGroup, setSelectedGroup] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -67,6 +63,10 @@ export default function App() {
   const tiers = analysis?.tiers ?? null;
   const fresh = analysis?.model === model;
   const state = history[history.length - 1];
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+  }, [dark]);
 
   useEffect(() => {
     try {
@@ -111,7 +111,6 @@ export default function App() {
     }
     setError("");
     setModel(next);
-    setPreset("custom");
     const remap = (mask: number) => remapState(mask, model, next);
     setHistory((h) => h.map(remap));
     setSelectedGroup(remap);
@@ -121,44 +120,28 @@ export default function App() {
           model: a.model,
           tiers: a.tiers
             .map((s) => ({ ...s, mask: remap(s.mask), model: remap(s.model), record: remap(s.record) }))
-            .filter((s) => s.mask),
+            .filter((s) => (s.tier === "consciousness" ? s.model && s.record : s.mask)),
         },
     );
-  };
-  const load = (next: NetworkModel, id: string) => {
-    setModel(next);
-    setPreset(id);
-    setHistory([randomState(next)]);
-    setAnalysis(null);
-    setSelectedId(null);
-    setEvents([]);
-    setEnergy({});
-    setVitals([]);
-    setError("");
   };
 
   const loops = tiers?.filter((s) => s.tier === "consciousness") ?? [];
   const strength = (s: TierScore, h = history) => liveLoop(s, h, model.nodes.length);
 
   const advance = () => {
-    const locate = (id: string) => bodies.current.get(id) ?? { x: W / 2, y: H / 2 };
-    const h = [...history, step(model, history, world, locate, noise)].slice(-HISTORY);
+    const locate = (id: string) => bodies.current.get(id) ?? { x: W / 2, y: LIGHT_RANGE * 0.45 };
+    const h = [...history, step(model, history, world, locate, NOISE)].slice(-HISTORY);
     setHistory(h);
     setTick((t) => t + 1);
     setVitals((list) => [...list, { neurons: model.nodes.length, loop: Math.max(0, ...loops.map((s) => strength(s, h))) }].slice(-HISTORY));
-    if (!evolving) return;
     const life = live(model, fresh ? tiers : null, h, energy, world, locate);
     setEnergy(life.energy);
     setWorld(life.world);
     if (life.events.length) setEvents((list) => [...life.events.map((e) => ({ ...e, tick })), ...list].slice(0, LOGGED));
     if (life.model !== model) change(life.model);
   };
-  const shake = () => {
-    setHistory((h) => [...h, randomState(model)].slice(-HISTORY));
-    setTick((t) => t + 1);
-  };
-  const actions = useRef({ advance, shake });
-  actions.current = { advance, shake };
+  const actions = useRef({ advance });
+  actions.current = { advance };
 
   useEffect(() => {
     if (!running) return;
@@ -171,7 +154,6 @@ export default function App() {
       if (event.target instanceof HTMLElement && event.target.closest("input, select, button, [role=button]")) return;
       if (event.key === " ") setRunning((r) => !r);
       else if (event.key === "s") actions.current.advance();
-      else if (event.key === "r") actions.current.shake();
       else return;
       event.preventDefault();
     };
@@ -181,6 +163,15 @@ export default function App() {
 
   const updateNode = (index: number, node: BinaryNode) =>
     change({ ...model, nodes: model.nodes.map((n, i) => (i === index ? node : n)) });
+
+  const generateRandom = () => {
+    const next = randomModel(6, Math.floor(Math.random() * 0xffffffff) || 1);
+    bodies.current.clear();
+    setEnergy(Object.fromEntries(next.nodes.map((n) => [n.id, START_ENERGY])));
+    setModel(next);
+    setHistory([randomState(next)]);
+    setSelectedId(null);
+  };
 
   const aware = tiers?.filter((s) => s.tier !== "perception") ?? [];
   const focus = tiers?.find((s) => s.mask === selectedGroup);
@@ -216,22 +207,34 @@ export default function App() {
             {running ? "❚❚ Pause" : "▶ Play"}
           </button>
           <button onClick={advance} disabled={running}>Step</button>
-          <button onClick={shake}>Shake</button>
-          <label className="toggle">
-            <input type="checkbox" checked={evolving} onChange={(e) => setEvolving(e.target.checked)} />
-            Evolve
-          </label>
+          <button onClick={generateRandom}>Random gen</button>
+          <button
+            onClick={() => {
+              const freshModel = emptyModel();
+              bodies.current.clear();
+              setModel(freshModel);
+              setHistory([0]);
+              setTick(0);
+              setEnergy({});
+              setEvents([]);
+              setVitals([]);
+              setWorld(START_WORLD);
+              setSelectedId(null);
+            }}
+          >
+            ↻ Reset
+          </button>
           <label className="toggle">
             <input type="checkbox" checked={world.lit} onChange={(e) => setWorld({ ...world, lit: e.target.checked })} />
-            Light
+            Sun
+          </label>
+          <label className="toggle">
+            <input type="checkbox" checked={dark} onChange={(e) => setDark(e.target.checked)} />
+            Dark
           </label>
           <label className="slider">
             speed <b>{speed}/s</b>
             <input type="range" min={1} max={12} value={speed} onChange={(e) => setSpeed(Number(e.target.value))} />
-          </label>
-          <label className="slider">
-            noise <b>{Math.round(noise * 100)}%</b>
-            <input type="range" min={0} max={0.2} step={0.01} value={noise} onChange={(e) => setNoise(Number(e.target.value))} />
           </label>
         </div>
       </header>
@@ -262,9 +265,7 @@ export default function App() {
               focus={focus}
               selectedNeuron={neuron < 0 ? null : neuron}
               onNeuron={(i) => setSelectedId(neuron === i ? null : model.nodes[i].id)}
-              onWorld={setWorld}
             />
-            <Timeline model={model} history={history} rows={rows} />
             <Vitals vitals={vitals} />
           </section>
 
@@ -307,35 +308,47 @@ export default function App() {
               </div>
             </section>
 
-            <section className="panel" aria-label="Network choice">
-              <h2>Network</h2>
-              <div className="pick">
-                <select
-                  aria-label="Example"
-                  value={fixtures.some((f) => f.id === preset) ? preset : ""}
-                  onChange={(e) => load(fixtureModel(e.target.value), e.target.value)}
+            <section className="panel" aria-label="Rule">
+              <h2>{neuron < 0 ? "Network · Rule" : `Network · Neuron ${model.nodes[neuron].label}`}</h2>
+              <div className="neuron-bar">
+                {model.nodes.map((node, i) => (
+                  <button
+                    key={node.id}
+                    className={`neuron-pill ${neuron === i ? "selected" : ""}`}
+                    onClick={() => setSelectedId(neuron === i ? null : node.id)}
+                  >
+                    {node.label}
+                  </button>
+                ))}
+                <button
+                  disabled={model.nodes.length >= MAX_NODES}
+                  onClick={() => {
+                    const next = addNode(model);
+                    const created = next.nodes[next.nodes.length - 1];
+                    setEnergy((prev) => ({ ...prev, [created.id]: START_ENERGY }));
+                    change(next);
+                    setSelectedId(created.id);
+                  }}
                 >
-                  <option value="" disabled>
-                    {preset === "random" ? "Random network" : "Custom network"}
-                  </option>
-                  {fixtures.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.title}
-                    </option>
-                  ))}
-                </select>
-                <span className="roll">
-                  <input
-                    type="number"
-                    aria-label="Neuron count"
-                    min={2}
-                    max={MAX_NODES}
-                    value={size}
-                    onChange={(e) => setSize(Math.max(2, Math.min(MAX_NODES, Number(e.target.value) || 2)))}
-                  />
-                  <button onClick={() => load(randomModel(size, Math.floor(Math.random() * 2 ** 32)), "random")}>Roll</button>
-                </span>
+                  + Add neuron
+                </button>
+                <button onClick={generateRandom}>Random gen</button>
               </div>
+              {neuron >= 0 ? (
+                <RuleEditor
+                  key={model.nodes[neuron].id}
+                  model={model}
+                  index={neuron}
+                  onChange={(next) => updateNode(neuron, next)}
+                  onRemove={() => {
+                    const next = removeNode(model, neuron);
+                    change(next);
+                    setSelectedId(next.nodes[Math.min(neuron, next.nodes.length - 1)]?.id ?? null);
+                  }}
+                />
+              ) : (
+                <p className="hint">Select a neuron above or in the space to edit its sense, move, or logical connections.</p>
+              )}
               {events.length > 0 && (
                 <ol className="log" aria-label="Life log">
                   {events.map((e, k) => (
@@ -345,29 +358,6 @@ export default function App() {
                   ))}
                 </ol>
               )}
-            </section>
-
-            <section className="panel" aria-label="Rule">
-              <h2>{neuron < 0 ? "Rule" : `Neuron ${model.nodes[neuron].label}`}</h2>
-              {neuron >= 0 && (
-                <RuleEditor
-                  key={model.nodes[neuron].id}
-                  model={model}
-                  index={neuron}
-                  onChange={(next) => updateNode(neuron, next)}
-                  onRemove={() => change(removeNode(model, neuron))}
-                />
-              )}
-              <button
-                disabled={model.nodes.length >= MAX_NODES}
-                onClick={() => {
-                  const next = addNode(model);
-                  change(next);
-                  setSelectedId(next.nodes[next.nodes.length - 1].id);
-                }}
-              >
-                + Add neuron
-              </button>
             </section>
           </aside>
         </div>

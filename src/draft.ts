@@ -1,7 +1,7 @@
 import { validateModel } from "./core/model";
 import type { NetworkModel } from "./core/model";
 
-export const DRAFT_KEY = "logocausal:draft:v2";
+export const DRAFT_KEY = "logocausal:draft:v3";
 
 export function parseDraft(json: string): NetworkModel {
   const { model } = JSON.parse(json);

@@ -6,16 +6,16 @@ import { randomModel } from "./model";
 const tier = (id: string, mask: number) => analyze(fixtureModel(id)).find((s) => s.mask === mask)!;
 
 describe("recursive tiers", () => {
-  it("scores self-copying nodes as aware but not conscious", () => {
+  it("scores unlinked nodes as perception without self-loops", () => {
     const single = tier("independent", 1);
-    expect(single.awareness).toBeCloseTo(1, 9);
+    expect(single.awareness).toBe(0);
     expect(single.loop).toBe(0);
-    expect(single.tier).toBe("awareness");
+    expect(single.tier).toBe("perception");
   });
 
   it("scores a mutual loop as conscious while its parts only perceive", () => {
     const swap = fixtureModel("oneway");
-    swap.nodes[0].inputs = [1];
+    swap.nodes[0] = { ...swap.nodes[0], sense: undefined, inputs: [1], table: [0, 1] };
     const tiers = analyze(swap);
     const pair = tiers.find((s) => s.mask === 3)!;
     expect(pair.loop).toBeCloseTo(1, 9);

@@ -10,6 +10,7 @@ export interface BinaryNode {
   inputs: number[];
   table: number[];
   sense?: Sense;
+  push?: Sense;
 }
 
 export interface NetworkModel {
@@ -29,7 +30,8 @@ export const makeNode = (
   label: string,
   inputs: number[],
   table: number[],
-): BinaryNode => ({ id, label, inputs, table });
+  push?: Sense,
+): BinaryNode => (push ? { id, label, inputs, table, push } : { id, label, inputs, table });
 
 export const makeSensor = (id: string, label: string, sense: Sense): BinaryNode => ({ id, label, inputs: [], table: [0], sense });
 
@@ -41,8 +43,8 @@ export function validateModel(value: unknown): asserts value is NetworkModel {
     throw new Error("The model name must contain 1–100 characters.");
   if (!Number.isSafeInteger(model.seed) || model.seed < 0 || model.seed > 0xffffffff)
     throw new Error("Seed must be an unsigned 32-bit integer.");
-  if (!Array.isArray(model.nodes) || model.nodes.length < 2 || model.nodes.length > MAX_NODES)
-    throw new Error(`A network needs 2–${MAX_NODES} neurons.`);
+  if (!Array.isArray(model.nodes) || model.nodes.length > MAX_NODES)
+    throw new Error(`A network holds at most ${MAX_NODES} neurons.`);
   const ids = new Set<string>();
   const labels = new Set<string>();
   for (const [i, node] of model.nodes.entries()) {
@@ -62,17 +64,19 @@ export function validateModel(value: unknown): asserts value is NetworkModel {
       !Array.isArray(node.inputs) ||
       node.inputs.length > MAX_INPUTS ||
       new Set(node.inputs).size !== node.inputs.length ||
-      node.inputs.some((j) => !Number.isInteger(j) || j < 0 || j >= model.nodes.length)
+      node.inputs.some((j) => !Number.isInteger(j) || j < 0 || j >= model.nodes.length || j === i)
     )
-      throw new Error(`Neuron ${i} reads at most ${MAX_INPUTS} distinct neurons.`);
+      throw new Error(`Neuron ${i} reads at most ${MAX_INPUTS} distinct other neurons.`);
     if (
       !Array.isArray(node.table) ||
       node.table.length !== 2 ** node.inputs.length ||
       node.table.some((bit) => bit !== 0 && bit !== 1)
     )
       throw new Error(`Neuron ${i}'s truth table must contain exactly ${2 ** node.inputs.length} binary outputs.`);
-    if (node.sense !== undefined && (!(node.sense in SENSES) || node.inputs.length))
-      throw new Error(`Sensor ${i} reads no neurons.`);
+    if (node.sense !== undefined && !(node.sense in SENSES))
+      throw new Error(`Neuron ${i} has an invalid sense target.`);
+    if (node.push !== undefined && !(node.push in SENSES))
+      throw new Error(`Neuron ${i} has an invalid push target.`);
   }
 }
 
@@ -100,20 +104,36 @@ export function seededRandom(seed: number): () => number {
   };
 }
 
+export const emptyModel = (): NetworkModel => ({ version: 1, name: "Empty", seed: 42, nodes: [] });
+
 export function randomModel(count: number, seed: number): NetworkModel {
   const rng = seededRandom(seed);
   const pick = <T>(list: T[]) => list[Math.floor(rng() * list.length)];
-  const nodes = Array.from({ length: count }, (_, i) => {
+  const senses = Object.keys(SENSES) as Sense[];
+  const nodes: BinaryNode[] = Array.from({ length: count }, (_, i) => {
     const inputs: number[] = [];
-    const degree = Math.min(count, pick([1, 2, 2, 2, 3]));
+    const degree = count <= 1 ? 0 : Math.min(count - 1, pick([0, 1, 1, 2, 2, 3]));
     while (inputs.length < degree) {
       const j = Math.floor(rng() * count);
-      if (!inputs.includes(j)) inputs.push(j);
+      if (j !== i && !inputs.includes(j)) inputs.push(j);
     }
     inputs.sort((a, b) => a - b);
-    if (rng() < 0.25) return makeSensor(`node-${i}`, letter(i), pick(Object.keys(SENSES) as Sense[]));
-    return makeNode(`node-${i}`, letter(i), inputs, tableFor(pick(gatesFor(degree)), degree));
+    const sense = rng() < 0.45 ? pick(senses) : undefined;
+    const push = rng() < 0.45 ? pick(senses) : undefined;
+    const table = degree === 0 ? [0] : tableFor(pick(gatesFor(degree)), degree);
+    return {
+      id: `node-${i}`,
+      label: letter(i),
+      inputs,
+      table,
+      ...(sense ? { sense } : {}),
+      ...(push ? { push } : {}),
+    };
   });
+  if (count >= 2) {
+    if (!nodes.some((n) => n.sense === "food")) nodes[0] = { ...nodes[0], sense: "food" };
+    if (!nodes.some((n) => n.push === "food")) nodes[1] = { ...nodes[1], push: "food" };
+  }
   return { version: 1, name: `Random ${count}`, seed, nodes };
 }
 
@@ -126,13 +146,13 @@ export function addNode(model: NetworkModel): NetworkModel {
   let label = letter(i);
   for (let suffix = 2; model.nodes.some((node) => node.label.trim() === label); suffix++)
     label = `${letter(i)}${suffix}`;
-  return { ...model, nodes: [...model.nodes, makeNode(id, label, [i], [0, 1])] };
+  const created = i === 0 ? makeNode(id, label, [], [0]) : makeNode(id, label, [0], [1, 0]);
+  return { ...model, nodes: [...model.nodes, created] };
 }
 
 /** Removing a neuron fixes its present bit to zero in every rule that read it. */
 export function removeNode(model: NetworkModel, removed: number): NetworkModel {
   validateModel(model);
-  if (model.nodes.length <= 2) throw new Error("Keep at least 2 neurons.");
   if (!Number.isInteger(removed) || removed < 0 || removed >= model.nodes.length)
     throw new Error("Invalid neuron index.");
   return {

@@ -9,14 +9,14 @@ const infix = (symbol: string, negate = false) => (names: string[]) => {
 export const GATES = {
   off: { name: "always 0", fn: () => 0, show: () => "0" },
   on: { name: "always 1", fn: () => 1, show: () => "1" },
-  same: { name: "copy", fn: ([a]: number[]) => a, show: ([a]: string[]) => a },
   not: { name: "NOT", fn: ([a]: number[]) => 1 - a, show: ([a]: string[]) => `¬${a}` },
-  or: { name: "OR", fn: any, show: infix("∨") },
+  same: { name: "COPY", fn: ([a]: number[]) => a, show: ([a]: string[]) => a },
   and: { name: "AND", fn: all, show: infix("∧") },
-  xor: { name: "XOR", fn: odd, show: infix("⊕") },
-  nor: { name: "NOR", fn: (bits: number[]) => 1 - any(bits), show: infix("∨", true) },
+  or: { name: "OR", fn: any, show: infix("∨") },
   nand: { name: "NAND", fn: (bits: number[]) => 1 - all(bits), show: infix("∧", true) },
-  xnor: { name: "XNOR", fn: (bits: number[]) => 1 - odd(bits), show: infix("⊕", true) },
+  nor: { name: "NOR", fn: (bits: number[]) => 1 - any(bits), show: infix("∨", true) },
+  xor: { name: "XOR", fn: odd, show: infix("⊕") },
+  xnor: { name: "NXOR", fn: (bits: number[]) => 1 - odd(bits), show: infix("⊕", true) },
 };
 export type Gate = keyof typeof GATES;
 
@@ -24,8 +24,8 @@ export const gatesFor = (inputs: number): Gate[] =>
   inputs === 0
     ? ["off", "on"]
     : inputs === 1
-      ? ["same", "not"]
-      : ["or", "and", "xor", "nor", "nand", "xnor"];
+      ? ["not", "same"]
+      : ["and", "or", "nand", "nor", "xor", "xnor"];
 
 export const bitsOf = (row: number, inputs: number) =>
   Array.from({ length: inputs }, (_, i) => (row >>> i) & 1);

@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { H, MAX_POPULATION, MIN_NODES, SPLIT_ENERGY, W, fitness, live, step, sunAt, temperature, tired } from "./evolve";
+import { outline } from "../components/NetworkGraph";
+import { FEED_RANGE, H, MAX_POPULATION, MIN_NODES, SENSE_RANGE, SPLIT_ENERGY, W, feedRadius, fitness, live, pushVector, spawnFoodNearSun, step, sunAt, temperature, tired } from "./evolve";
 import type { Energy, Locate, World } from "./evolve";
 import { fixtureModel } from "./fixtures";
 import { randomModel, remapState, seededRandom } from "./model";
 import type { NetworkModel } from "./model";
 import { analyze } from "./recursion";
 
-const middle: Locate = () => ({ x: W / 2, y: H / 2 });
-const world: World = { lit: true, sun: W / 2, food: [{ x: W / 2, y: H / 2, amount: 1 }] };
+const middle: Locate = () => ({ x: W / 2, y: 200 });
+const world: World = { lit: true, sun: W / 2, food: [{ x: W / 2, y: 200, amount: 1 }] };
 
 const run = (model: NetworkModel, ticks: number, rng: () => number, noise = 0.05) => {
   const history = [5];
@@ -17,7 +18,10 @@ const run = (model: NetworkModel, ticks: number, rng: () => number, noise = 0.05
 
 describe("life", () => {
   it("rests a neuron that fired FATIGUE ticks in a row", () => {
-    const always = { ...fixtureModel("independent"), nodes: fixtureModel("independent").nodes.map((n) => ({ ...n, inputs: [], table: [1] })) };
+    const always = {
+      ...fixtureModel("independent"),
+      nodes: fixtureModel("independent").nodes.map((n) => ({ ...n, inputs: [], table: [0], sense: "light" as const })),
+    };
     const history = run(always, 8, () => 0.99, 0);
     expect(history.map((s) => s & 1)).toEqual([1, 1, 1, 0, 1, 1, 1, 0]);
     expect(tired([1, 1, 1], 0)).toBe(true);
@@ -58,11 +62,41 @@ describe("life", () => {
     expect(fitness(model, analyze(model), [0, 0, 0, 0])).toEqual([0, 0, 0]);
   });
 
-  it("feeds firing neurons near food and depletes it", () => {
+  it("feeds firing neurons near food, shrinks feed radius, and senses food from a larger radius", () => {
+    expect(SENSE_RANGE).toBeGreaterThan(FEED_RANGE);
     const model = fixtureModel("forager");
     const result = live(model, null, [0b11111], {}, world, middle, seededRandom(1));
     expect(result.world.food[0].amount).toBeLessThan(1);
+    expect(feedRadius(result.world.food[0])).toBeLessThan(FEED_RANGE);
     expect(result.energy[model.nodes[0].id]).toBeGreaterThan(1);
+
+    const outerFoodWorld: World = {
+      lit: true,
+      sun: W / 2,
+      food: [{ x: W / 2 + FEED_RANGE + 30, y: 200, amount: 1 }],
+    };
+    expect(step(model, [0], outerFoodWorld, middle, 0) & 0b1).toBe(1);
+    const outerResult = live(model, null, [0b11111], {}, outerFoodWorld, middle, seededRandom(1));
+    expect(outerResult.world.food[0].amount).toBeGreaterThanOrEqual(1);
+    expect(feedRadius({ amount: 2.5 })).toBeGreaterThan(FEED_RANGE * 2);
+
+    const spawned = spawnFoodNearSun(world, seededRandom(2));
+    expect(Math.hypot(spawned.x - W / 2, spawned.y)).toBeLessThan(680);
+  });
+
+  it("pushes the system toward sensed food or light only when push neurons are on", () => {
+    const model = fixtureModel("forager");
+    const directedWorld: World = {
+      lit: true,
+      sun: W / 2,
+      food: [{ x: W / 2 + 120, y: 200, amount: 1 }],
+    };
+    expect(pushVector(model, 0, directedWorld, middle)).toEqual({ x: 0, y: 0 });
+    const towardFood = pushVector(model, 1 << 2, directedWorld, middle);
+    expect(towardFood.x).toBeGreaterThan(0);
+    expect(towardFood.y).toBeCloseTo(0);
+    const towardLight = pushVector(model, 1 << 4, directedWorld, middle);
+    expect(towardLight.y).toBeLessThan(0);
   });
 
   it("keeps the network valid and within bounds over many ticks", () => {
@@ -99,5 +133,10 @@ describe("life", () => {
     const died = events.filter((e) => e.kind === "died");
     expect(died).toHaveLength(6 - MIN_NODES);
     expect(died.every((e) => e.cause === "froze")).toBe(true);
+  });
+
+  it("handles empty or overlapping point sets in group outlines without crashing", () => {
+    expect(outline([], 20)).toBe("");
+    expect(outline([{ x: 100, y: 100 }, { x: 100, y: 100 }], 20)).toContain("A 20,20");
   });
 });
