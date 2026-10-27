@@ -1,0 +1,161 @@
+{
+  "method": "Paired seeds 1–5 (pilot) and 6–10 (validation); 1500 ticks; noise 0.002; fixed 1600 × 1000 habitat. Structural feedback components use effective truth-table edges. Longest runs require unchanged membership, input IDs, truth tables and senses. No claim of functional computation.",
+  "baselinePilot": {
+    "sourceSha256": {
+      "model": "cb107b5ad5f03e7b7593672d6de18a1040a33eddff45e36530ea3ea7a9c879f3",
+      "gates": "e60c5a7e18b1082aa5d482bd77d129c08ae450fe4d65beaf120a36f05cdd524d",
+      "evolve": "1af50aab8a545611bb90e4b16f682c1e80f62ed7e41e9474c568bb4567619869",
+      "physics": "46ff03be71c879628f0ea13c952d6c87548a6af5afc0c634e757639b487fe184",
+      "info": "14746d2f0339e6eef8c63cb04b0205fdf5a98e708272070219e6b463a9d64d85",
+      "recursion": "842afeff09495b450366f22fc639dfaa40d9afc3b13879caa3dba027795742df",
+      "machine": "dffa0be52d42e6301194af5b1485f7ce38371cd11eea9f858782901934b7f99e",
+      "simulation": "59876ddaffbf0a55f6127867d9a8a84e212dabf4ba4e01269f17f9ff999e0a64",
+      "topology": "d68fa3bf759da5cca29e97c031fd73c0db0093bce2af3dc71eaf219ae00a2156"
+    },
+    "summary": {
+      "survived": 5,
+      "runs": 5,
+      "horizon": 1500,
+      "noise": 0.002,
+      "sampleEvery": 24,
+      "meanLifetime": 1500,
+      "births": 86,
+      "lateBirths": 24,
+      "meanLiveLoopFraction": 0.9635846372688478,
+      "meanLateLoopFraction": 1,
+      "meanActivityEntropy": 0.8236221682166379,
+      "meanTravel": 19.07111752679474,
+      "meanLargerFeedbackFraction": 0.8603174603174605,
+      "meanUncheckedFraction": 0.546031746031746,
+      "meanLargerCoreFraction": 0.6693333333333333,
+      "meanLargestCore": 4.3832,
+      "meanLongestCoreTicks": 49.6
+    },
+    "runs": [
+      {"seed":1,"ticks":1500,"population":13,"births":25,"deaths":18,"lateBirths":13,"topologyChanges":285,"activeFraction":1,"liveLoopFraction":0.938122332859175,"lateLoopFraction":1,"activityEntropy":0.8217133031302847,"meanTravel":16.64896359904201,"distinctStates":422,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":48,"Memory & oscillator":12,"Oscillator":2,"Settling feedback":1},"wholeTypes":{"Oscillator":14,"Memory & oscillator":22,"Logic circuit":59,"Feedback circuit":22,"Settling feedback":1},"maxCircuitSize":13,"selectedChanges":35,"largerCoreFraction":0.7446666666666667,"meanLargestCore":3.5673333333333335,"maxFeedbackSize":9,"longestCoreTicks":74,"largerFeedbackFraction":0.8888888888888888,"uncheckedFraction":0.3492063492063492}},
+      {"seed":2,"ticks":1500,"population":14,"births":18,"deaths":10,"lateBirths":1,"topologyChanges":348,"activeFraction":0.9985775248933144,"liveLoopFraction":0.9608819345661451,"lateLoopFraction":1,"activityEntropy":0.8370211125740075,"meanTravel":20.103242064959357,"distinctStates":504,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":52,"Memory & oscillator":6,"Oscillator":5},"wholeTypes":{"Logic circuit":55,"Memory & oscillator":12,"Oscillator":12,"Feedback circuit":43},"maxCircuitSize":14,"selectedChanges":42,"largerCoreFraction":0.6326666666666667,"meanLargestCore":4.3933333333333335,"maxFeedbackSize":12,"longestCoreTicks":49,"largerFeedbackFraction":0.8571428571428571,"uncheckedFraction":0.6825396825396826}},
+      {"seed":3,"ticks":1500,"population":14,"births":16,"deaths":8,"lateBirths":7,"topologyChanges":274,"activeFraction":0.9943100995732574,"liveLoopFraction":0.9580369843527738,"lateLoopFraction":1,"activityEntropy":0.8509630513216432,"meanTravel":20.226417017059973,"distinctStates":337,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":56,"Memory & oscillator":7},"wholeTypes":{"Oscillator":11,"Settling feedback":2,"Logic circuit":35,"Memory & oscillator":17,"Stable memory":2,"Feedback circuit":21},"maxCircuitSize":14,"selectedChanges":38,"largerCoreFraction":0.4126666666666667,"meanLargestCore":2.91,"maxFeedbackSize":11,"longestCoreTicks":50,"largerFeedbackFraction":0.8412698412698413,"uncheckedFraction":0.3333333333333333}},
+      {"seed":4,"ticks":1500,"population":14,"births":16,"deaths":8,"lateBirths":3,"topologyChanges":366,"activeFraction":1,"liveLoopFraction":0.9608819345661451,"lateLoopFraction":1,"activityEntropy":0.7570847676680649,"meanTravel":18.492348226466284,"distinctStates":385,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":55,"Memory & oscillator":7,"Oscillator":1},"wholeTypes":{"Oscillator":7,"Memory & oscillator":4,"Feedback circuit":40,"Settling feedback":3,"Logic circuit":101},"maxCircuitSize":14,"selectedChanges":42,"largerCoreFraction":0.7246666666666667,"meanLargestCore":4.434666666666667,"maxFeedbackSize":10,"longestCoreTicks":40,"largerFeedbackFraction":0.8253968253968254,"uncheckedFraction":0.6349206349206349}},
+      {"seed":5,"ticks":1500,"population":14,"births":11,"deaths":3,"lateBirths":0,"topologyChanges":343,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8513286063891891,"meanTravel":19.884616726446065,"distinctStates":378,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":45,"Memory & oscillator":18},"wholeTypes":{"Logic circuit":30,"Memory & oscillator":9,"Oscillator":1,"Feedback circuit":46},"maxCircuitSize":14,"selectedChanges":34,"largerCoreFraction":0.832,"meanLargestCore":6.610666666666667,"maxFeedbackSize":12,"longestCoreTicks":35,"largerFeedbackFraction":0.8888888888888888,"uncheckedFraction":0.7301587301587301}}
+    ]
+  },
+  "tunedPilot": {
+    "sourceSha256": {
+      "model": "cb107b5ad5f03e7b7593672d6de18a1040a33eddff45e36530ea3ea7a9c879f3",
+      "gates": "e60c5a7e18b1082aa5d482bd77d129c08ae450fe4d65beaf120a36f05cdd524d",
+      "evolve": "f7346b4850dbba16aa291ecd670342f045be8c8855817d11de73a1442fad5b15",
+      "physics": "46ff03be71c879628f0ea13c952d6c87548a6af5afc0c634e757639b487fe184",
+      "info": "14746d2f0339e6eef8c63cb04b0205fdf5a98e708272070219e6b463a9d64d85",
+      "recursion": "842afeff09495b450366f22fc639dfaa40d9afc3b13879caa3dba027795742df",
+      "machine": "dffa0be52d42e6301194af5b1485f7ce38371cd11eea9f858782901934b7f99e",
+      "simulation": "59876ddaffbf0a55f6127867d9a8a84e212dabf4ba4e01269f17f9ff999e0a64",
+      "topology": "d68fa3bf759da5cca29e97c031fd73c0db0093bce2af3dc71eaf219ae00a2156"
+    },
+    "summary": {
+      "survived": 5,
+      "runs": 5,
+      "horizon": 1500,
+      "noise": 0.002,
+      "sampleEvery": 24,
+      "meanLifetime": 1500,
+      "births": 80,
+      "lateBirths": 37,
+      "meanLiveLoopFraction": 0.9658605974395449,
+      "meanLateLoopFraction": 1,
+      "meanActivityEntropy": 0.807947360532061,
+      "meanTravel": 19.890518108022754,
+      "meanLargerFeedbackFraction": 0.8920634920634921,
+      "meanUncheckedFraction": 0.19365079365079363,
+      "meanLargerCoreFraction": 0.7352000000000001,
+      "meanLargestCore": 3.720133333333333,
+      "meanLongestCoreTicks": 69.8
+    },
+    "runs": [
+      {"seed":1,"ticks":1500,"population":14,"births":13,"deaths":5,"lateBirths":0,"topologyChanges":314,"activeFraction":0.9907539118065434,"liveLoopFraction":0.9509246088193457,"lateLoopFraction":1,"activityEntropy":0.8190220292582265,"meanTravel":22.05360545384634,"distinctStates":390,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":50,"Memory & oscillator":11,"Oscillator":2},"wholeTypes":{"Oscillator":9,"Memory & oscillator":13,"Settling feedback":3,"Logic circuit":83,"Feedback circuit":27},"maxCircuitSize":14,"selectedChanges":37,"largerCoreFraction":0.746,"meanLargestCore":3.574666666666667,"maxFeedbackSize":9,"longestCoreTicks":137,"largerFeedbackFraction":0.8095238095238095,"uncheckedFraction":0.42857142857142855}},
+      {"seed":2,"ticks":1500,"population":12,"births":13,"deaths":7,"lateBirths":7,"topologyChanges":268,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8146358477215316,"meanTravel":21.004880168529407,"distinctStates":275,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":54,"Oscillator":3,"Memory & oscillator":6},"wholeTypes":{"Logic circuit":44,"Oscillator":23,"Settling feedback":12,"Memory & oscillator":17,"Feedback circuit":4,"Stable memory":1},"maxCircuitSize":11,"selectedChanges":35,"largerCoreFraction":0.736,"meanLargestCore":3.934,"maxFeedbackSize":10,"longestCoreTicks":47,"largerFeedbackFraction":0.9047619047619048,"uncheckedFraction":0.06349206349206349}},
+      {"seed":3,"ticks":1500,"population":14,"births":12,"deaths":4,"lateBirths":7,"topologyChanges":290,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8182983999668559,"meanTravel":17.58739864004163,"distinctStates":533,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":44,"Memory & oscillator":18,"Oscillator":1},"wholeTypes":{"Oscillator":22,"Settling feedback":5,"Memory & oscillator":66,"Logic circuit":22,"Feedback circuit":2},"maxCircuitSize":14,"selectedChanges":36,"largerCoreFraction":0.7666666666666667,"meanLargestCore":4.016,"maxFeedbackSize":8,"longestCoreTicks":52,"largerFeedbackFraction":1,"uncheckedFraction":0.031746031746031744}},
+      {"seed":4,"ticks":1500,"population":14,"births":23,"deaths":15,"lateBirths":11,"topologyChanges":283,"activeFraction":0.980796586059744,"liveLoopFraction":0.8897581792318634,"lateLoopFraction":1,"activityEntropy":0.7620310648178364,"meanTravel":18.444759070770445,"distinctStates":392,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":56,"Memory & oscillator":6,"Oscillator":1},"wholeTypes":{"Oscillator":14,"Memory & oscillator":22,"Feedback circuit":12,"Settling feedback":4,"Logic circuit":65},"maxCircuitSize":14,"selectedChanges":32,"largerCoreFraction":0.692,"meanLargestCore":3.255333333333333,"maxFeedbackSize":6,"longestCoreTicks":42,"largerFeedbackFraction":0.8253968253968254,"uncheckedFraction":0.19047619047619047}},
+      {"seed":5,"ticks":1500,"population":14,"births":19,"deaths":11,"lateBirths":12,"topologyChanges":259,"activeFraction":0.9950213371266002,"liveLoopFraction":0.9886201991465149,"lateLoopFraction":1,"activityEntropy":0.8257494608958545,"meanTravel":20.361947206925926,"distinctStates":333,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":57,"Memory & oscillator":2,"Oscillator":4},"wholeTypes":{"Logic circuit":65,"Memory & oscillator":13,"Settling feedback":7,"Oscillator":23,"Stable memory":2,"Feedback circuit":16},"maxCircuitSize":14,"selectedChanges":33,"largerCoreFraction":0.7353333333333333,"meanLargestCore":3.820666666666667,"maxFeedbackSize":9,"longestCoreTicks":71,"largerFeedbackFraction":0.9206349206349206,"uncheckedFraction":0.25396825396825395}}
+    ]
+  },
+  "baselineValidation": {
+    "sourceSha256": {
+      "model": "cb107b5ad5f03e7b7593672d6de18a1040a33eddff45e36530ea3ea7a9c879f3",
+      "gates": "e60c5a7e18b1082aa5d482bd77d129c08ae450fe4d65beaf120a36f05cdd524d",
+      "evolve": "1af50aab8a545611bb90e4b16f682c1e80f62ed7e41e9474c568bb4567619869",
+      "physics": "46ff03be71c879628f0ea13c952d6c87548a6af5afc0c634e757639b487fe184",
+      "info": "14746d2f0339e6eef8c63cb04b0205fdf5a98e708272070219e6b463a9d64d85",
+      "recursion": "842afeff09495b450366f22fc639dfaa40d9afc3b13879caa3dba027795742df",
+      "machine": "dffa0be52d42e6301194af5b1485f7ce38371cd11eea9f858782901934b7f99e",
+      "simulation": "59876ddaffbf0a55f6127867d9a8a84e212dabf4ba4e01269f17f9ff999e0a64",
+      "topology": "d68fa3bf759da5cca29e97c031fd73c0db0093bce2af3dc71eaf219ae00a2156"
+    },
+    "summary": {
+      "survived": 5,
+      "runs": 5,
+      "firstSeed": 6,
+      "horizon": 1500,
+      "noise": 0.002,
+      "sampleEvery": 24,
+      "meanLifetime": 1500,
+      "births": 75,
+      "lateBirths": 22,
+      "meanLiveLoopFraction": 0.9539118065433854,
+      "meanLateLoopFraction": 1,
+      "meanActivityEntropy": 0.8185275475464879,
+      "meanTravel": 19.556087668658144,
+      "meanLargerFeedbackFraction": 0.8857142857142858,
+      "meanUncheckedFraction": 0.580952380952381,
+      "meanLargerCoreFraction": 0.5498666666666667,
+      "meanLargestCore": 3.3072000000000004,
+      "meanLongestCoreTicks": 58.4
+    },
+    "runs": [
+      {"seed":6,"ticks":1500,"population":14,"births":8,"deaths":0,"lateBirths":0,"topologyChanges":349,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8150677538179479,"meanTravel":13.559323273452604,"distinctStates":447,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":40,"Memory & oscillator":19,"Oscillator":4},"wholeTypes":{"Memory & oscillator":30,"Settling feedback":3,"Logic circuit":81,"Feedback circuit":24,"Oscillator":13},"maxCircuitSize":14,"selectedChanges":39,"largerCoreFraction":0.732,"meanLargestCore":3.774,"maxFeedbackSize":10,"longestCoreTicks":53,"largerFeedbackFraction":0.9365079365079365,"uncheckedFraction":0.38095238095238093}},
+      {"seed":7,"ticks":1500,"population":14,"births":24,"deaths":16,"lateBirths":15,"topologyChanges":292,"activeFraction":0.9879089615931721,"liveLoopFraction":0.9587482219061166,"lateLoopFraction":1,"activityEntropy":0.8281752024937384,"meanTravel":23.47179298329659,"distinctStates":400,"mechanisms":{"samples":63,"selectedTypes":{"Memory & oscillator":16,"Logic circuit":45,"Oscillator":2},"wholeTypes":{"Memory & oscillator":14,"Oscillator":10,"Feedback circuit":34,"Settling feedback":3,"Logic circuit":14},"maxCircuitSize":14,"selectedChanges":34,"largerCoreFraction":0.488,"meanLargestCore":3.1846666666666668,"maxFeedbackSize":8,"longestCoreTicks":84,"largerFeedbackFraction":0.9682539682539683,"uncheckedFraction":0.5396825396825397}},
+      {"seed":8,"ticks":1500,"population":14,"births":17,"deaths":9,"lateBirths":1,"topologyChanges":377,"activeFraction":1,"liveLoopFraction":0.9992887624466572,"lateLoopFraction":1,"activityEntropy":0.8048592945369646,"meanTravel":19.29712101208196,"distinctStates":492,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":56,"Oscillator":1,"Memory & oscillator":6},"wholeTypes":{"Settling feedback":1,"Logic circuit":101,"Oscillator":1,"Memory & oscillator":3,"Feedback circuit":50},"maxCircuitSize":14,"selectedChanges":39,"largerCoreFraction":0.448,"meanLargestCore":3.2853333333333334,"maxFeedbackSize":10,"longestCoreTicks":36,"largerFeedbackFraction":0.873015873015873,"uncheckedFraction":0.7936507936507936}},
+      {"seed":9,"ticks":1500,"population":14,"births":8,"deaths":0,"lateBirths":0,"topologyChanges":377,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8349961392922374,"meanTravel":17.876628874142934,"distinctStates":393,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":53,"Memory & oscillator":8,"Settling feedback":2},"wholeTypes":{"Oscillator":12,"Logic circuit":21,"Feedback circuit":47,"Memory & oscillator":24,"Settling feedback":2,"Stable memory":1},"maxCircuitSize":14,"selectedChanges":36,"largerCoreFraction":0.64,"meanLargestCore":3.6433333333333335,"maxFeedbackSize":11,"longestCoreTicks":70,"largerFeedbackFraction":1,"uncheckedFraction":0.746031746031746}},
+      {"seed":10,"ticks":1500,"population":14,"births":18,"deaths":10,"lateBirths":6,"topologyChanges":291,"activeFraction":1,"liveLoopFraction":0.8115220483641536,"lateLoopFraction":1,"activityEntropy":0.8095393475915508,"meanTravel":23.57557220031663,"distinctStates":284,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":58,"Memory & oscillator":2,"Oscillator":3},"wholeTypes":{"Logic circuit":63,"Oscillator":7,"Feedback circuit":28,"Memory & oscillator":7},"maxCircuitSize":14,"selectedChanges":34,"largerCoreFraction":0.44133333333333336,"meanLargestCore":2.6486666666666667,"maxFeedbackSize":9,"longestCoreTicks":49,"largerFeedbackFraction":0.6507936507936508,"uncheckedFraction":0.4444444444444444}}
+    ]
+  },
+  "tunedValidation": {
+    "sourceSha256": {
+      "model": "cb107b5ad5f03e7b7593672d6de18a1040a33eddff45e36530ea3ea7a9c879f3",
+      "gates": "e60c5a7e18b1082aa5d482bd77d129c08ae450fe4d65beaf120a36f05cdd524d",
+      "evolve": "f7346b4850dbba16aa291ecd670342f045be8c8855817d11de73a1442fad5b15",
+      "physics": "46ff03be71c879628f0ea13c952d6c87548a6af5afc0c634e757639b487fe184",
+      "info": "14746d2f0339e6eef8c63cb04b0205fdf5a98e708272070219e6b463a9d64d85",
+      "recursion": "842afeff09495b450366f22fc639dfaa40d9afc3b13879caa3dba027795742df",
+      "machine": "dffa0be52d42e6301194af5b1485f7ce38371cd11eea9f858782901934b7f99e",
+      "simulation": "59876ddaffbf0a55f6127867d9a8a84e212dabf4ba4e01269f17f9ff999e0a64",
+      "topology": "d68fa3bf759da5cca29e97c031fd73c0db0093bce2af3dc71eaf219ae00a2156"
+    },
+    "summary": {
+      "survived": 5,
+      "runs": 5,
+      "firstSeed": 6,
+      "horizon": 1500,
+      "noise": 0.002,
+      "sampleEvery": 24,
+      "meanLifetime": 1500,
+      "births": 72,
+      "lateBirths": 12,
+      "meanLiveLoopFraction": 0.9783783783783784,
+      "meanLateLoopFraction": 0.9941333333333333,
+      "meanActivityEntropy": 0.8226500642060192,
+      "meanTravel": 17.586993060140337,
+      "meanLargerFeedbackFraction": 0.9079365079365079,
+      "meanUncheckedFraction": 0.5015873015873016,
+      "meanLargerCoreFraction": 0.7012,
+      "meanLargestCore": 4.3693333333333335,
+      "meanLongestCoreTicks": 73.4
+    },
+    "runs": [
+      {"seed":6,"ticks":1500,"population":14,"births":10,"deaths":2,"lateBirths":0,"topologyChanges":344,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8174665169944133,"meanTravel":17.144186576361566,"distinctStates":407,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":53,"Memory & oscillator":9,"Oscillator":1},"wholeTypes":{"Memory & oscillator":19,"Settling feedback":3,"Logic circuit":73,"Feedback circuit":41,"Oscillator":4},"maxCircuitSize":14,"selectedChanges":41,"largerCoreFraction":0.7986666666666666,"meanLargestCore":5.17,"maxFeedbackSize":13,"longestCoreTicks":42,"largerFeedbackFraction":0.9523809523809523,"uncheckedFraction":0.6507936507936508}},
+      {"seed":7,"ticks":1500,"population":14,"births":13,"deaths":5,"lateBirths":0,"topologyChanges":331,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8577905652345782,"meanTravel":20.44162932141121,"distinctStates":378,"mechanisms":{"samples":63,"selectedTypes":{"Memory & oscillator":11,"Logic circuit":52},"wholeTypes":{"Memory & oscillator":8,"Oscillator":6,"Logic circuit":43,"Feedback circuit":37,"Settling feedback":4},"maxCircuitSize":14,"selectedChanges":39,"largerCoreFraction":0.608,"meanLargestCore":3.8526666666666665,"maxFeedbackSize":10,"longestCoreTicks":61,"largerFeedbackFraction":0.873015873015873,"uncheckedFraction":0.5873015873015873}},
+      {"seed":8,"ticks":1500,"population":12,"births":24,"deaths":18,"lateBirths":12,"topologyChanges":248,"activeFraction":0.9907539118065434,"liveLoopFraction":0.8918918918918919,"lateLoopFraction":0.9706666666666667,"activityEntropy":0.7693049546469793,"meanTravel":20.83544563409879,"distinctStates":546,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":58,"Memory & oscillator":4,"Oscillator":1},"wholeTypes":{"Settling feedback":4,"Logic circuit":120,"Oscillator":20,"Memory & oscillator":26,"Feedback circuit":5,"Stable memory":1},"maxCircuitSize":11,"selectedChanges":36,"largerCoreFraction":0.544,"meanLargestCore":2.513333333333333,"maxFeedbackSize":9,"longestCoreTicks":109,"largerFeedbackFraction":0.7619047619047619,"uncheckedFraction":0.07936507936507936}},
+      {"seed":9,"ticks":1500,"population":14,"births":8,"deaths":0,"lateBirths":0,"topologyChanges":424,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8421011883696152,"meanTravel":14.190327730641371,"distinctStates":528,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":53,"Memory & oscillator":10},"wholeTypes":{"Oscillator":7,"Logic circuit":42,"Feedback circuit":57,"Memory & oscillator":1},"maxCircuitSize":14,"selectedChanges":37,"largerCoreFraction":0.852,"meanLargestCore":5.865333333333333,"maxFeedbackSize":12,"longestCoreTicks":32,"largerFeedbackFraction":1,"uncheckedFraction":0.9047619047619048}},
+      {"seed":10,"ticks":1500,"population":14,"births":17,"deaths":9,"lateBirths":0,"topologyChanges":355,"activeFraction":1,"liveLoopFraction":1,"lateLoopFraction":1,"activityEntropy":0.8265870957845098,"meanTravel":15.323376038188737,"distinctStates":612,"mechanisms":{"samples":63,"selectedTypes":{"Logic circuit":45,"Memory & oscillator":15,"Oscillator":3},"wholeTypes":{"Logic circuit":40,"Memory & oscillator":19,"Oscillator":24,"Feedback circuit":18,"Settling feedback":13},"maxCircuitSize":14,"selectedChanges":41,"largerCoreFraction":0.7033333333333334,"meanLargestCore":4.445333333333333,"maxFeedbackSize":13,"longestCoreTicks":123,"largerFeedbackFraction":0.9523809523809523,"uncheckedFraction":0.2857142857142857}}
+    ]
+  }
+}
