@@ -22,6 +22,15 @@ export const MAX_GROUP = 5;
 
 export const scoreKey = (score: number): number => Math.round(score * 1e9);
 
+export const groupBits = (group: TierScore): number => group.tier === "consciousness" ? group.loop : group.awareness;
+
+/** Highest displayed information score, with a stable tie-break by membership mask. */
+export function highestGroup(tiers: TierScore[]): TierScore | undefined {
+  return tiers.filter(s => s.tier !== "perception").reduce<TierScore | undefined>((best, s) =>
+    !best || scoreKey(groupBits(s)) > scoreKey(groupBits(best)) ||
+    (scoreKey(groupBits(s)) === scoreKey(groupBits(best)) && s.mask < best.mask) ? s : best, undefined);
+}
+
 /** Anchor the least significant member in A so each unordered bipartition appears once. */
 function bipartitions(mask: number): [number, number][] {
   const anchor = mask & -mask;

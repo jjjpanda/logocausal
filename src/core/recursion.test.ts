@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
 import { fixtureModel, fixtures } from "./fixtures";
-import { MAX_GROUP, analyze } from "./recursion";
+import { MAX_GROUP, analyze, highestGroup } from "./recursion";
 import { randomModel } from "./model";
 
 const tier = (id: string, mask: number) => analyze(fixtureModel(id)).find((s) => s.mask === mask)!;
 
 describe("recursive tiers", () => {
+  it("chooses the highest displayed bit score and breaks ties consistently", () => {
+    const loop = tier("overlap", 3);
+    const awareness = tier("oneway", 3);
+    expect(highestGroup([loop, awareness])).toBe(awareness);
+    const tied = { ...loop, mask: 6 };
+    expect(highestGroup([tied, loop])).toBe(loop);
+    expect(highestGroup(analyze(fixtureModel("independent")))).toBeUndefined();
+  });
   it("scores unlinked nodes as perception without self-loops", () => {
     const single = tier("independent", 1);
     expect(single.awareness).toBe(0);

@@ -141,7 +141,7 @@ export function addNode(model: NetworkModel): NetworkModel {
   validateModel(model);
   if (model.nodes.length >= MAX_NODES) throw new Error(`A network holds at most ${MAX_NODES} neurons.`);
   const i = model.nodes.length;
-  let id = `node-${i}`;
+  let id = `node-${crypto.randomUUID()}`;
   while (model.nodes.some((node) => node.id === id)) id += "-new";
   let label = letter(i);
   for (let suffix = 2; model.nodes.some((node) => node.label.trim() === label); suffix++)

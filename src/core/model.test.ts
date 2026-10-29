@@ -51,4 +51,12 @@ describe("model", () => {
     expect(outputBit(model.nodes[0], 0b10)).toBe(1);
     expect(outputBit(model.nodes[0], 0b00)).toBe(0);
   });
+
+  it("does not reuse a deceased neuron's ID when the population regrows", () => {
+    const base = fixtureModel("overlap");
+    const grown = addNode(base);
+    const deceased = grown.nodes.at(-1)!.id;
+    const regrown = addNode(removeNode(grown, grown.nodes.length - 1));
+    expect(regrown.nodes.at(-1)!.id).not.toBe(deceased);
+  });
 });
