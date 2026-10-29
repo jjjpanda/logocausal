@@ -234,8 +234,8 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <span className="brand" aria-label="Logocausal">
-          <span className={`brand-mark ${running ? "live" : ""}`} aria-hidden="true">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="12" r="5" fill="currentColor" /></svg>
+          <span className="brand-mark" aria-hidden="true">
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="26" height="26" />
           </span>
         </span>
         <div className="transport" role="toolbar" aria-label="Simulation">
