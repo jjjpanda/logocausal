@@ -36,8 +36,9 @@ export function separate(model: NetworkModel, bodies: Bodies, world: World, pinn
       let distance = Math.hypot(dx, dy);
       if (distance >= 1) continue;
       if (distance < 1e-6) { dx = Math.cos(j * 2.4); dy = Math.sin(j * 2.4); distance = 1e-6; }
-      const shiftX = dx / Math.hypot(dx, dy) * (1 - distance) * r * 3.1;
-      const shiftY = dy / Math.hypot(dx, dy) * (1 - distance) * r * 3.8;
+      const norm = Math.hypot(dx, dy);
+      const shiftX = (dx / norm) * (1 - distance) * r * 3.1;
+      const shiftY = (dy / norm) * (1 - distance) * r * 3.8;
       const pinnedA = model.nodes[i].id === pinned, pinnedB = model.nodes[j].id === pinned;
       if (!pinnedA) { a.x -= shiftX * (pinnedB ? 1 : 0.5); a.y -= shiftY * (pinnedB ? 1 : 0.5); }
       if (!pinnedB) { b.x += shiftX * (pinnedA ? 1 : 0.5); b.y += shiftY * (pinnedA ? 1 : 0.5); }

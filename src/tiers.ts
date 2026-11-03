@@ -14,7 +14,3 @@ export const TIER_TERM: Record<Tier, string> = {
 };
 
 export const HALF_COLORS = ["#2f5bff", "#e5383b"];
-
-/** A stable hue per neuron family, spread by the golden angle. */
-export const familyColor = (family: string) =>
-  `hsl(${([...family].reduce((sum, c) => sum + c.charCodeAt(0), 0) * 137.508) % 360} 70% 42%)`;

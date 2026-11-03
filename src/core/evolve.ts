@@ -22,7 +22,6 @@ export const LIGHT_RANGE = 1200;
 export const SUN_SPEED = 3;
 export const FEED_RANGE = 160;
 export const SENSE_RANGE = 380;
-export const SMELL_RANGE = SENSE_RANGE;
 export const PUSH_FORCE = 1.6;
 /** Below COLD, processes slow; above HOT, neurons take heat damage. */
 export const COLD = 0.25;
@@ -332,9 +331,8 @@ function mutate(
   rng: () => number,
 ): Pick<BinaryNode, "inputs" | "table" | "sense" | "push"> {
   const { inputs: rawInputs, table: rawTable, sense, push } = parent;
-  const validInputs = rawInputs.filter((i) => i !== selfIndex);
-  const inputs = validInputs;
-  const table = validInputs.length === rawInputs.length ? rawTable : tableFor(gatesFor(inputs.length)[0], inputs.length);
+  const inputs = rawInputs.filter((i) => i !== selfIndex);
+  const table = inputs.length === rawInputs.length ? rawTable : tableFor(gatesFor(inputs.length)[0], inputs.length);
   const free = Array.from({ length: neurons }, (_, i) => i).filter((i) => i !== selfIndex && !inputs.includes(i));
   const gates = gatesFor(inputs.length)
     .map((gate) => tableFor(gate, inputs.length))
@@ -377,18 +375,18 @@ function clone(model: NetworkModel, p: number, rng: () => number): NetworkModel 
   const child = model.nodes.length;
   const grown = addNode(model);
   const mutated = rng() < 0.25 ? mutate(parent, child, child + 1, rng) : parent;
-  const nodes = grown.nodes.map((node, i) => {
-    if (i !== child) return node;
-    const next: BinaryNode = {
-      id: node.id,
-      label: familyLabel(model, parent.label),
-      inputs: mutated.inputs,
-      table: mutated.table,
-      ...(mutated.sense ? { sense: mutated.sense } : {}),
-      ...(mutated.push ? { push: mutated.push } : {}),
-    };
-    return next;
-  });
+  const nodes = grown.nodes.map((node, i): BinaryNode =>
+    i !== child
+      ? node
+      : {
+          id: node.id,
+          label: familyLabel(model, parent.label),
+          inputs: mutated.inputs,
+          table: mutated.table,
+          ...(mutated.sense ? { sense: mutated.sense } : {}),
+          ...(mutated.push ? { push: mutated.push } : {}),
+        },
+  );
   // Let a reader use the child instead of adding another operand to its gate.
   // Budding should preserve working truth tables rather than repeatedly widening them.
   const readers = nodes.flatMap((node, i) => (i !== child && node.inputs.includes(p) ? [i] : []));

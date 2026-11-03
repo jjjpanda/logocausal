@@ -37,5 +37,5 @@ export default function useLeadingGroup(model: NetworkModel, tiers: TierScore[] 
     if (focus) previous.current = { model, group: focus, generation };
     else previous.current = null;
   }, [model, focus, generation]);
-  return { focus, scored: fresh && !!rankedFocus };
+  return { focus };
 }

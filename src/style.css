@@ -82,12 +82,6 @@ h1 { font: 700 18px var(--font); }
 .hud { font: 700 12px var(--font); text-align: right; line-height: 1.6; }
 .habitat-canvas { position: relative; min-height: 0; overflow: hidden; background: var(--paper); }
 .network-svg { display: block; width: 100%; height: 100%; touch-action: none; }
-.legend-neuron { border: 1px solid var(--ink); border-radius: 50%; background: var(--accent); }
-.legend-food { border: 1px solid #0a9d62; border-radius: 50%; background: #0a9d6220; }
-.legend-sun { background: var(--sun); border-radius: 50%; }
-.legend-ring { border: 2px solid var(--cold); border-radius: 50%; }
-.legend-bars { background: repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 4px); }
-.legend-group { background: linear-gradient(90deg, #4477ff 50%, #ff4466 50%); }
 .habitat-empty { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(85%, 390px); text-align: center; background: var(--paper); padding: 14px; border: var(--bw) solid var(--ink); }
 .habitat-empty h2 { font-size: 20px; margin-bottom: 10px; }
 .habitat-empty p { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
@@ -341,10 +335,6 @@ summary span { float: right; color: var(--muted); font: 11px var(--font); }
   stroke-dasharray: none;
   fill: #0a9d62;
   fill-opacity: 0.08;
-}
-.push-mark {
-  font-size: 11px;
-  font-weight: 700;
 }
 .sun,
 .food {

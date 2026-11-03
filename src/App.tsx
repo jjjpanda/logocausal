@@ -42,7 +42,7 @@ function restoreDraft() {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (raw) return parseDraft(raw);
   } catch {
-    return randomPopulation();
+    // Fall back to a fresh random population when saved data is unavailable or invalid.
   }
   return randomPopulation();
 }

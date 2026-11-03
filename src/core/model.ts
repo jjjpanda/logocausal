@@ -84,6 +84,9 @@ export function members(mask: number, n: number): number[] {
   return Array.from({ length: n }, (_, i) => i).filter((i) => (mask & (1 << i)) !== 0);
 }
 
+export const groupName = (model: NetworkModel, mask: number): string =>
+  `{${members(mask, model.nodes.length).map((i) => model.nodes[i].label).join(", ")}}`;
+
 export function popcount(mask: number): number {
   let count = 0;
   for (; mask; mask &= mask - 1) count++;

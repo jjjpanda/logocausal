@@ -20,33 +20,21 @@ export default function RuleEditor({
   const node = model.nodes[index];
   const names = node.inputs.map((i) => model.nodes[i].label);
   const gate = node.inputs.length > 0 ? gateOf(node.inputs.length, node.table) : undefined;
+  const update = (patch: Partial<BinaryNode>) => {
+    const next = { ...node, ...patch };
+    onChange({
+      id: next.id,
+      label: next.label,
+      inputs: next.inputs,
+      table: next.table,
+      ...(next.sense ? { sense: next.sense } : {}),
+      ...(next.push ? { push: next.push } : {}),
+    });
+  };
   const apply = (inputs: number[], next: Gate) =>
-    onChange({
-      id: node.id,
-      label: node.label,
-      inputs,
-      table: inputs.length === 0 ? [0] : tableFor(next, inputs.length),
-      ...(node.sense ? { sense: node.sense } : {}),
-      ...(node.push ? { push: node.push } : {}),
-    });
-  const setSense = (value: string) =>
-    onChange({
-      id: node.id,
-      label: node.label,
-      inputs: node.inputs,
-      table: node.table,
-      ...(value in SENSES ? { sense: value as Sense } : {}),
-      ...(node.push ? { push: node.push } : {}),
-    });
-  const setPush = (value: string) =>
-    onChange({
-      id: node.id,
-      label: node.label,
-      inputs: node.inputs,
-      table: node.table,
-      ...(node.sense ? { sense: node.sense } : {}),
-      ...(value in SENSES ? { push: value as Sense } : {}),
-    });
+    update({ inputs, table: inputs.length === 0 ? [0] : tableFor(next, inputs.length) });
+  const setSense = (value: string) => update({ sense: value in SENSES ? (value as Sense) : undefined });
+  const setPush = (value: string) => update({ push: value in SENSES ? (value as Sense) : undefined });
   const setInputs = (inputs: number[]) => apply(inputs, gatesFor(inputs.length)[0]);
   const addable = model.nodes.map((_, i) => i).filter((i) => i !== index && !node.inputs.includes(i));
   const logicFormula = node.inputs.length > 0 ? (gate ? GATES[gate].show(names) : "custom") : "";

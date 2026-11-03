@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { describeMachine, largerCircuit } from "../core/machine";
 import type { CircuitDescription } from "../core/machine";
-import { members } from "../core/model";
+import { groupName, members } from "../core/model";
 import type { NetworkModel } from "../core/model";
 import type { Frame } from "../core/history";
 import GroupActivity from "./GroupActivity";
@@ -42,9 +42,10 @@ export default function GroupMachine({ model, mask, frames, running, circuits }:
   const description = immediate ? current : settled.value;
   const changing = !immediate && changed;
   const { machine, larger } = description;
+  const groupLabel = groupName(model, inspectionMask);
   return <section className="machine-description" aria-label="Machine description">
     <h3>Machine type</h3>
-    {inspectingWhole && <div className="machine-scope"><p>Whole circuit · {`{${group.map(i => model.nodes[i].label).join(", ")}}`}</p>
+    {inspectingWhole && <div className="machine-scope"><p>Whole circuit · {groupLabel}</p>
       <button className="text-button" onClick={() => setScope({ identity: highlighted, whole: false })}>Back to highlighted group</button></div>}
     {machine ? <>
       <strong className="machine-name">{machine.name}</strong>
@@ -63,7 +64,7 @@ export default function GroupMachine({ model, mask, frames, running, circuits }:
         <p>Whole circuit · {`{${larger.neurons.map(n => n.label).join(", ")}}`}</p>
         <strong>{larger.machine.name}</strong>
         <p>{larger.machine.detail}</p>
-        <p className="machine-note">Live activity above shows {`{${group.map(i => model.nodes[i].label).join(", ")}}`}.</p>
+        <p className="machine-note">Live activity above shows {groupLabel}.</p>
         <button className="text-button" onClick={() => setScope({ identity: highlighted, whole: true })}>Inspect whole circuit</button>
       </aside>}
       <p className="machine-note">Outside inputs held steady; all neurons update together. Capabilities may vary with input settings. Live activity also includes fatigue, cold and noise.</p>

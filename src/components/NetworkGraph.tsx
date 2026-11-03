@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { COLD, H, HOT, LIGHT_RANGE, MAX_FOOD_AMOUNT, SPLIT_ENERGY, START_ENERGY, SUN_SPEED, feedRadius, processRate, senseRadius, sunAt, temperature, tired, worldBounds } from "../core/evolve";
 import type { Bounds, Energy, Point, World } from "../core/evolve";
-import { members } from "../core/model";
+import { groupName, members } from "../core/model";
 import { GATES, gateOf } from "../core/gates";
 import type { NetworkModel } from "../core/model";
 import type { TierScore } from "../core/recursion";
@@ -11,11 +11,9 @@ import { HALF_COLORS } from "../tiers";
 import { centroid, place, radius } from "../core/physics";
 import type { Bodies } from "../core/physics";
 export type { Bodies } from "../core/physics";
+export { groupName } from "../core/model";
 
 type Grab = { neuron: number; id: string };
-export const GROUP_COLORS = ["#0a9d62", "#9d4edd", "#f77f00"];
-export const groupName = (model: NetworkModel, mask: number) =>
-  `{${members(mask, model.nodes.length).map((i) => model.nodes[i].label).join(", ")}}`;
 const FADE = 900;
 const SIGNAL_TRAIL = 650;
 const SIGNAL_AFTERGLOW = 240;
